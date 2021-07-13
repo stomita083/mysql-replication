@@ -1,0 +1,61 @@
+version: '3.7'
+
+services:
+
+  master:
+    container_name: mysql_master
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./master/conf/:/conf
+      - ./setup.sh:/usr/local/bin/setup.sh
+      - master_log/:/var/log/mysql/
+      - master_db:/var/lib/mysql
+    tty: true
+    environment:
+      TZ: 'Asia/Tokyo'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'master'
+    command: >
+      bash -c "
+      cp /conf/my.cnf /etc/mysql/conf.d/ &&
+      chmod 644 /etc/mysql/conf.d/my.cnf &&
+      /entrypoint.sh mysqld"
+    networks:
+      - demo-network
+
+  slave:
+    container_name: mysql_slave
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./slave/conf/:/conf
+      - ./setup.sh:/usr/local/bin/setup.sh
+      - slave_log/:/var/log/mysql/
+      - slave_db:/var/lib/mysql
+    tty: true
+    environment:
+      TZ: 'Asia/Tokyo'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'slave'
+    command: >
+      bash -c "
+      cp /conf/my.cnf /etc/mysql/conf.d/ &&
+      chmod 644 /etc/mysql/conf.d/my.cnf &&
+      /entrypoint.sh mysqld"
+    networks:
+      - demo-network
+
+volumes:
+  master_db: {}
+  master_log: {}
+  slave_db: {}
+  slave_log: {}
+
+networks:
+  demo-network:
+    driver: bridge
